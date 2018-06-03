@@ -30,12 +30,49 @@ class NSTUAPI:
     def __init__(self):
         pass
 
-    def get_persons_current_pair(self, person_id):
+    def get_persons_current_pair(self, person_id, date = None):
         #TODO!!!!! Еще в процессе
         try:
-            r = requests.get('https://api_my.nstu.ru/2/getPossibleScheduleForDay',params={"faculty": "АВТФ", "day": "Среда", "pair":3, "odd": 1 },)
+            r = requests.get('https://api_my.nstu.ru/2/get_persons_details',params={"person_id": person_id})
+            print(r.status_code)
             if r.status_code == 200:
-                print(r.json())
+                week_number = Utils.get_week_number("05.02.2018")
+                if date == None:
+                    cur_date = datetime.datetime.now()
+                else:
+                    cur_date = parser.parse(date)
+                cur_day_of_week = cur_date.weekday()
+                # cur_day_of_week = 1 # for test
+                cur_time_str = cur_date.strftime("%H:%M")
+                pair_number = -1
+                if Utils.is_between(cur_time_str, ("08:30", "09:55")):
+                    pair_number = 1
+                elif Utils.is_between(cur_time_str, ("10:10", "11:35")):
+                    pair_number = 2
+                elif Utils.is_between(cur_time_str, ("11:50", "13:15")):
+                    pair_number = 3
+                elif Utils.is_between(cur_time_str, ("13:45", "15:10")):
+                    pair_number = 4
+                elif Utils.is_between(cur_time_str, ("15:25", "16:50")):
+                    pair_number = 5
+                elif Utils.is_between(cur_time_str, ("17:05", "18:30")):
+                    pair_number = 6
+                elif Utils.is_between(cur_time_str, ("18:40", "20:00")):
+                    pair_number = 7
+                has_pair = False
+                temp_pair = None
+                for pair in r.json()[str(person_id)]["lessons"][cur_day_of_week]:
+                    if str(pair["pair_number"]) == str(pair_number):
+                        has_pair = True
+                        temp_pair = pair
+                        break
+                    else:
+                        has_pair = False
+                            # break
+                if has_pair:
+                    return (OperationResult.SUCCESSFUL, temp_pair)
+                else:
+                    return (OperationResult.UNSUCCESSFUL, None)
                 # resp = r.json()[0]
                 # return OperationResult.SUCCESSFUL,{"group": resp["STUDY_GROUP"],
                 #      "FIO": "%s %s %s" %(resp["FAMILY_NAME"], resp["NAME"], resp["PATRONYMIC_NAME"])}
@@ -79,7 +116,7 @@ class NSTUAPI:
                 temp_pair = None
                 for pair in r.json()["data"][cur_day_of_week]:
                     if pair["pair_number"] == pair_number:
-                        if pair["weeks"][week_number-1] == 1:
+                        if pair["weeks"][week_number - 1] == 1:
                             has_pair = True
                             temp_pair = pair
                             break
@@ -142,4 +179,4 @@ if __name__ == '__main__':
         info_result = napi.get_student_info(auth_result[1])
         # Время в запросе ниже, вовсе не обязательно. Но нужно также в API конечном его предусмотреть как опциональный параметр
         cur_pair = napi.get_current_pair(auth_result[1], "2018-05-29 11:59:35")
-        print(napi.get_persons_current_pair("91252"))
+    print(napi.get_persons_current_pair("91", "2018-05-21 11:59:35"))
