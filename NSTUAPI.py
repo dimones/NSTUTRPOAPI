@@ -29,7 +29,24 @@ class Utils:
 class NSTUAPI:
     def __init__(self):
         pass
-
+    def get_all_persons_pairs(self, person_id):
+        # TODO!!!!! Еще в процессе
+        try:
+            r = requests.get('https://api_my.nstu.ru/2/get_persons_details', params={"person_id": person_id})
+            if r.status_code == 200:
+                out_data = []
+                for day in r.json()[str(person_id)]["lessons"]:
+                    for pair in day:
+                        out_data.append(pair)
+                return OperationResult.SUCCESSFUL, out_data
+            else:
+                return OperationResult.UNSUCCESSFUL, str()
+        except requests.exceptions.ConnectionError as e:
+            print(e)
+            return OperationResult.NETERROR, str()
+        except Exception as e:
+            print(e)
+            return OperationResult.WTFERROR, str()
     def get_persons_current_pair(self, person_id, date = None):
         #TODO!!!!! Еще в процессе
         try:
@@ -73,9 +90,6 @@ class NSTUAPI:
                     return (OperationResult.SUCCESSFUL, temp_pair)
                 else:
                     return (OperationResult.UNSUCCESSFUL, None)
-                # resp = r.json()[0]
-                # return OperationResult.SUCCESSFUL,{"group": resp["STUDY_GROUP"],
-                #      "FIO": "%s %s %s" %(resp["FAMILY_NAME"], resp["NAME"], resp["PATRONYMIC_NAME"])}
             else:
                 return OperationResult.UNSUCCESSFUL, str()
         except requests.exceptions.ConnectionError as e:
@@ -179,4 +193,4 @@ if __name__ == '__main__':
         info_result = napi.get_student_info(auth_result[1])
         # Время в запросе ниже, вовсе не обязательно. Но нужно также в API конечном его предусмотреть как опциональный параметр
         cur_pair = napi.get_current_pair(auth_result[1], "2018-05-29 11:59:35")
-    print(napi.get_persons_current_pair("91", "2018-05-21 11:59:35"))
+    print(napi.get_all_persons_pairs("91"))
