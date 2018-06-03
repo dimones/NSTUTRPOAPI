@@ -11,8 +11,11 @@ class OperationResult(Enum):
 class Utils:
     #get week number
     @staticmethod
-    def get_week_number(start_date):
-        now = datetime.date.today()
+    def get_week_number(start_date, current_date):
+        if current_date != None:
+            now = parser.parse(current_date).date()
+        else:
+            now = datetime.date.today()
         d = start_date.split('.')
         start = datetime.date(int(d[2]), int(d[1]), int(d[0]))
         delta = now - start
@@ -53,7 +56,7 @@ class NSTUAPI:
             r = requests.get('https://api_my.nstu.ru/2/get_persons_details',params={"person_id": person_id})
             print(r.status_code)
             if r.status_code == 200:
-                week_number = Utils.get_week_number("05.02.2018")
+                week_number = Utils.get_week_number("05.02.2018",date)
                 if date == None:
                     cur_date = datetime.datetime.now()
                 else:
@@ -103,7 +106,7 @@ class NSTUAPI:
             stud_info = self.get_student_info(token)
             if stud_info[0] is OperationResult.SUCCESSFUL:
                 r = requests.get("https://api_my.nstu.ru/2/get_schedule/%s" % (stud_info[1]["group"]))
-                week_number = Utils.get_week_number(r.json()["semester_begin"])
+                week_number = Utils.get_week_number(r.json()["semester_begin"],date)
                 if date == None:
                     cur_date = datetime.datetime.now()
                 else:
@@ -193,4 +196,5 @@ if __name__ == '__main__':
         info_result = napi.get_student_info(auth_result[1])
         # Время в запросе ниже, вовсе не обязательно. Но нужно также в API конечном его предусмотреть как опциональный параметр
         cur_pair = napi.get_current_pair(auth_result[1], "2018-05-29 11:59:35")
+        print(cur_pair)
     print(napi.get_all_persons_pairs("91"))
